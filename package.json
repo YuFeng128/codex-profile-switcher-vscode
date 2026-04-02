@@ -1,0 +1,61 @@
+{
+  "name": "codex-profile-switcher",
+  "displayName": "Codex Profile Switcher",
+  "description": "Switch Codex API base_url and auth key from inside VS Code.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YuFeng128/codex-profile-switcher-vscode.git"
+  },
+  "homepage": "https://github.com/YuFeng128/codex-profile-switcher-vscode#readme",
+  "bugs": {
+    "url": "https://github.com/YuFeng128/codex-profile-switcher-vscode/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:codexProfileSwitcher.view"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codexProfileSwitcher",
+          "title": "Codex",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codexProfileSwitcher": [
+        {
+          "type": "webview",
+          "id": "codexProfileSwitcher.view",
+          "name": "API Switcher"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codexProfileSwitcher.refresh",
+        "title": "Codex Profile Switcher: Refresh"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.8.3"
+  }
+}

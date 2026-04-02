@@ -1,0 +1,162 @@
+:root {
+  color-scheme: light dark;
+  --border: var(--vscode-panel-border);
+  --muted: var(--vscode-descriptionForeground);
+  --accent: var(--vscode-button-background);
+  --accent-foreground: var(--vscode-button-foreground);
+  --surface: var(--vscode-sideBar-background);
+  --surface-2: var(--vscode-editorWidget-background);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 14px;
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-foreground);
+  background: var(--surface);
+}
+
+.app {
+  display: grid;
+  gap: 14px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.subtle {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.current {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.list-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.list-item.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.list-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.list-url {
+  font-size: 12px;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+.form {
+  display: grid;
+  gap: 10px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+
+input {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+}
+
+.input-with-action {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.icon-button {
+  min-width: 36px;
+  min-height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--vscode-foreground);
+  background: transparent;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin: 0 auto;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.actions.single {
+  grid-template-columns: 1fr;
+}
+
+button {
+  min-height: 34px;
+  border: none;
+  border-radius: 6px;
+  padding: 0 10px;
+  cursor: pointer;
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+button.secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+}
+
+button.ghost {
+  color: var(--vscode-foreground);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.empty {
+  font-size: 12px;
+  color: var(--muted);
+}
