@@ -52,6 +52,7 @@ class CodexConfigManager {
             providerName: "",
             baseUrl: "",
             apiKey: "",
+            fastResponseEnabled: false,
         };
         const configText = await fs.readFile(this.configPath, "utf8");
         const providerNameMatch = configText.match(/^\s*model_provider\s*=\s*"([^"]+)"/m);
@@ -59,6 +60,8 @@ class CodexConfigManager {
         result.providerName = providerName;
         if (providerName) {
             result.baseUrl = readStringValueFromSection(configText, `model_providers.${providerName}`, "base_url");
+            result.fastResponseEnabled =
+                readStringValueFromSection(configText, `model_providers.${providerName}`, "service_tier") === "fast";
         }
         try {
             const authText = await fs.readFile(this.authPath, "utf8");
@@ -85,7 +88,7 @@ class CodexConfigManager {
             // ignore missing auth.json
         }
         const configText = await fs.readFile(this.configPath, "utf8");
-        const updatedConfig = updateProviderBaseUrl(configText, current.providerName, profile.baseUrl);
+        const updatedConfig = updateProviderConfig(configText, current.providerName, profile);
         await fs.writeFile(this.configPath, updatedConfig, "utf8");
         let authPayload = { auth_mode: "apikey" };
         try {
@@ -157,10 +160,16 @@ class CodexProfileViewProvider {
         }
     }
     loadProfiles() {
-        return this.context.globalState.get(PROFILE_KEY, []);
+        const profiles = this.context.globalState.get(PROFILE_KEY, []);
+        return profiles.map((profile) => ({
+            ...profile,
+            fastResponseEnabled: Boolean(profile.fastResponseEnabled),
+        }));
     }
     resolveCurrentProfileName(current, profiles) {
-        const matched = profiles.find((profile) => profile.baseUrl === current.baseUrl && profile.apiKey === current.apiKey);
+        const matched = profiles.find((profile) => profile.baseUrl === current.baseUrl &&
+            profile.apiKey === current.apiKey &&
+            profile.fastResponseEnabled === current.fastResponseEnabled);
         return matched?.name ?? "";
     }
     async saveProfiles(profiles) {
@@ -173,6 +182,7 @@ class CodexProfileViewProvider {
             name: String(raw.name ?? "").trim(),
             baseUrl: String(raw.baseUrl ?? "").trim(),
             apiKey: String(raw.apiKey ?? "").trim(),
+            fastResponseEnabled: Boolean(raw.fastResponseEnabled),
         };
         if (!profile.name) {
             throw new Error("显示名称不能为空。");
@@ -299,14 +309,15 @@ function readStringValueFromSection(text, sectionName, key) {
     const matcher = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=\\s*"([^"]*)"`, "m");
     return sectionText.match(matcher)?.[1] ?? "";
 }
-function updateProviderBaseUrl(text, providerName, baseUrl) {
+function updateProviderConfig(text, providerName, profile) {
     const sectionName = `model_providers.${providerName}`;
     const span = findSectionSpan(text, sectionName);
     if (!span) {
         throw new Error(`没有找到当前激活 provider 的配置段: [${sectionName}]`);
     }
     const current = text.slice(span.start, span.end).replace(/\n+$/g, "");
-    const updated = setSectionStringValue(current, "base_url", baseUrl);
+    let updated = setSectionStringValue(current, "base_url", profile.baseUrl);
+    updated = setOptionalSectionStringValue(updated, "service_tier", profile.fastResponseEnabled ? "fast" : undefined);
     const suffix = text.slice(span.end);
     return `${text.slice(0, span.start).replace(/\n+$/g, "")}\n${updated}\n${suffix.replace(/^\n+/g, "")}`;
 }
@@ -317,6 +328,13 @@ function setSectionStringValue(sectionText, key, value) {
         return sectionText.replace(pattern, replacement);
     }
     return `${sectionText}\n${key} = "${escapeTomlString(value)}"`;
+}
+function setOptionalSectionStringValue(sectionText, key, value) {
+    const pattern = new RegExp(`^\\s*${escapeRegExp(key)}\\s*=\\s*(\".*?\"|true|false|[^\\n#]+)\\s*(?:#.*)?\\r?\\n?`, "m");
+    if (value === undefined) {
+        return sectionText.replace(pattern, "").replace(/\n{3,}/g, "\n\n").replace(/\n+$/g, "");
+    }
+    return setSectionStringValue(sectionText, key, value);
 }
 function findSectionSpan(text, sectionName) {
     const matcher = /^\[(.+?)\]\s*$/gm;

@@ -3,7 +3,13 @@
 
   const state = {
     profiles: [],
-    current: { profileName: "", providerName: "", baseUrl: "", apiKey: "" },
+    current: {
+      profileName: "",
+      providerName: "",
+      baseUrl: "",
+      apiKey: "",
+      fastResponseEnabled: false,
+    },
     selectedId: null,
     showApiKey: false,
   };
@@ -21,6 +27,7 @@
       name: document.getElementById("name").value.trim(),
       baseUrl: document.getElementById("baseUrl").value.trim(),
       apiKey: document.getElementById("apiKey").value.trim(),
+      fastResponseEnabled: document.getElementById("fastResponseEnabled").checked,
     };
   }
 
@@ -28,25 +35,38 @@
     document.getElementById("name").value = profile?.name ?? "";
     document.getElementById("baseUrl").value = profile?.baseUrl ?? "";
     document.getElementById("apiKey").value = profile?.apiKey ?? "";
+    document.getElementById("fastResponseEnabled").checked = Boolean(profile?.fastResponseEnabled);
+  }
+
+  function renderProfileList() {
+    if (!state.profiles.length) {
+      return `<div class="empty">还没有保存的配置，可以先导入当前配置或手动新增。</div>`;
+    }
+
+    return state.profiles
+      .map((profile) => {
+        const active = profile.id === state.selectedId ? "active" : "";
+        const badgeClass = profile.fastResponseEnabled ? "list-badge" : "list-badge muted";
+        const badgeText = profile.fastResponseEnabled ? "快速响应" : "标准响应";
+
+        return `
+          <div class="list-item ${active}" data-id="${escapeHtml(profile.id)}">
+            <div class="list-head">
+              <div class="list-name">${escapeHtml(profile.name)}</div>
+              <span class="${badgeClass}">${badgeText}</span>
+            </div>
+            <div class="list-url">${escapeHtml(profile.baseUrl)}</div>
+          </div>
+        `;
+      })
+      .join("");
   }
 
   function render() {
     const currentProfileName = state.current.profileName || "未匹配到已保存配置";
     const currentProvider = state.current.providerName || "未检测到";
     const currentBaseUrl = state.current.baseUrl || "未检测到";
-    const items = state.profiles.length
-      ? state.profiles
-          .map((profile) => {
-            const active = profile.id === state.selectedId ? "active" : "";
-            return `
-              <div class="list-item ${active}" data-id="${escapeHtml(profile.id)}">
-                <div class="list-name">${escapeHtml(profile.name)}</div>
-                <div class="list-url">${escapeHtml(profile.baseUrl)}</div>
-              </div>
-            `;
-          })
-          .join("")
-      : `<div class="empty">还没有保存的配置，可以先导入当前配置或手动新增。</div>`;
+    const currentFastResponse = state.current.fastResponseEnabled ? "已开启" : "未开启";
 
     document.body.innerHTML = `
       <div class="app">
@@ -56,15 +76,16 @@
             <div>当前配置名称: ${escapeHtml(currentProfileName)}</div>
             <div>当前激活 Provider: ${escapeHtml(currentProvider)}</div>
             <div>当前 API 地址: ${escapeHtml(currentBaseUrl)}</div>
+            <div>快速响应: ${escapeHtml(currentFastResponse)}</div>
           </div>
           <div class="subtle" style="margin-top:8px;">
-            切换时只修改当前激活 provider 的 base_url，以及 auth.json 里的 OPENAI_API_KEY。切换完成后会重载 VS Code 窗口。
+            切换时会更新当前激活 provider 的 <code>base_url</code>、可选的 <code>service_tier = "fast"</code>，以及 <code>auth.json</code> 中的 <code>OPENAI_API_KEY</code>。切换完成后会重载 VS Code 窗口。
           </div>
         </section>
 
         <section class="card">
           <div class="title">已保存配置</div>
-          <div class="list" id="profileList">${items}</div>
+          <div class="list" id="profileList">${renderProfileList()}</div>
           <div class="actions" style="margin-top:10px;">
             <button id="switchBtn">切换选中配置</button>
             <button id="deleteBtn" class="secondary">删除选中</button>
@@ -106,6 +127,13 @@
                 </button>
               </div>
             </label>
+            <label class="checkbox-row" for="fastResponseEnabled">
+              <input id="fastResponseEnabled" type="checkbox" />
+              <span>开启快速响应配置</span>
+            </label>
+            <div class="subtle">
+              勾选后，切换配置时会在当前 provider 段写入 <code>service_tier = "fast"</code>；取消勾选则移除该配置。
+            </div>
           </div>
           <div class="actions" style="margin-top:12px;">
             <button id="addBtn">新增为新配置</button>
@@ -128,8 +156,6 @@
       element.addEventListener("click", () => {
         const id = element.getAttribute("data-id");
         state.selectedId = id;
-        const profile = state.profiles.find((item) => item.id === id) ?? null;
-        fillForm(profile);
         render();
       });
     });
@@ -155,12 +181,13 @@
         name: `导入于 ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`,
         baseUrl: state.current.baseUrl,
         apiKey: state.current.apiKey,
+        fastResponseEnabled: state.current.fastResponseEnabled,
       });
     });
 
     document.getElementById("clearBtn").addEventListener("click", () => {
       state.selectedId = null;
-      fillForm(null);
+      render();
     });
 
     document.getElementById("toggleApiKeyBtn").addEventListener("click", () => {

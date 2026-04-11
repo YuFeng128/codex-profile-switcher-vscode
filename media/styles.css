@@ -69,9 +69,31 @@ body {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
+.list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
 .list-name {
   font-weight: 600;
-  margin-bottom: 4px;
+}
+
+.list-badge {
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--accent-foreground);
+  background: color-mix(in srgb, var(--accent) 72%, transparent);
+}
+
+.list-badge.muted {
+  border-color: var(--border);
+  color: var(--muted);
+  background: transparent;
 }
 
 .list-url {
@@ -101,11 +123,23 @@ input {
   background: var(--vscode-input-background);
 }
 
+input[type="checkbox"] {
+  width: 16px;
+  min-height: 16px;
+  accent-color: var(--accent);
+}
+
 .input-with-action {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .icon-button {
