@@ -1,6 +1,10 @@
+.vscode/**
 src/**
 tsconfig.json
 node_modules/typescript/**
 node_modules/@types/**
 *.ts
+*.vsix
+fixtures/**
 release/**
+assert/**

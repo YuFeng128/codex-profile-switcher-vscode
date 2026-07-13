@@ -6,6 +6,9 @@
   --accent-foreground: var(--vscode-button-foreground);
   --surface: var(--vscode-sideBar-background);
   --surface-2: var(--vscode-editorWidget-background);
+  --card-current-accent: #2d8cf0;
+  --card-saved-accent: #2fa26b;
+  --card-editor-accent: #d28b26;
 }
 
 * {
@@ -25,6 +28,33 @@ body {
   gap: 14px;
 }
 
+.promo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 10px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 16%, var(--surface-2)),
+    color-mix(in srgb, var(--accent) 6%, var(--surface))
+  );
+}
+
+.promo-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.promo-value {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--vscode-foreground);
+}
+
 .card {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -32,10 +62,37 @@ body {
   padding: 12px;
 }
 
+.card-current {
+  --card-accent: var(--card-current-accent);
+  background: color-mix(in srgb, var(--card-current-accent) 8%, var(--surface-2));
+}
+
+.card-saved {
+  --card-accent: var(--card-saved-accent);
+  background: color-mix(in srgb, var(--card-saved-accent) 8%, var(--surface-2));
+}
+
+.card-editor {
+  --card-accent: var(--card-editor-accent);
+  background: color-mix(in srgb, var(--card-editor-accent) 8%, var(--surface-2));
+}
+
 .title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 700;
   margin-bottom: 8px;
+}
+
+.title::before {
+  content: "";
+  width: 8px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--card-accent, var(--accent));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--card-accent, var(--accent)) 35%, transparent);
 }
 
 .subtle {
@@ -102,6 +159,13 @@ body {
   word-break: break-all;
 }
 
+.list-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
 .form {
   display: grid;
   gap: 10px;
@@ -114,6 +178,16 @@ label {
 }
 
 input {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+}
+
+select {
   width: 100%;
   min-height: 32px;
   border: 1px solid var(--border);
@@ -140,6 +214,39 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.advanced-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  color: var(--vscode-foreground);
+  background: transparent;
+}
+
+.advanced-toggle.open {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.advanced-arrow {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.advanced-panel {
+  display: none;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  background: color-mix(in srgb, var(--surface) 35%, transparent);
+}
+
+.advanced-panel.open {
+  display: grid;
 }
 
 .icon-button {
@@ -193,4 +300,26 @@ button.ghost {
 .empty {
   font-size: 12px;
   color: var(--muted);
+}
+
+.notice {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--vscode-editorWarning-foreground) 40%, transparent);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--vscode-editorWarning-foreground);
+  background: color-mix(in srgb, var(--vscode-editorWarning-foreground) 10%, transparent);
+}
+
+.list-badge.secondary {
+  border-color: var(--border);
+  color: var(--vscode-foreground);
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+}
+
+.list-badge.warning {
+  border-color: color-mix(in srgb, var(--vscode-editorWarning-foreground) 48%, transparent);
+  color: var(--vscode-editorWarning-foreground);
+  background: color-mix(in srgb, var(--vscode-editorWarning-foreground) 18%, transparent);
 }
