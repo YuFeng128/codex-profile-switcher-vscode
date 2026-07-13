@@ -65,7 +65,9 @@
 
 - `codex-profile-switcher-1.0.3.vsix`
 
-也可以去 GitHub Releases 下载对应版本。
+也可以直接打开 GitHub Releases 下载对应版本：
+
+- [点击前往 Releases 页面](https://github.com/YuFeng128/codex-profile-switcher-vscode/releases)
 
 ### 第二步：安装到 VS Code
 
