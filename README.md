@@ -3,7 +3,7 @@
 用 VS Code 侧边栏一键切换 Codex 使用的账号或 API Key，不用再手动改 `~/.codex/config.toml` 和 `~/.codex/auth.json`。
 
 ![VS Code Extension](https://img.shields.io/badge/VS%20Code-Extension-2F6FEB?style=flat-square&logo=visualstudiocode&logoColor=white)
-![Release v1.0.3](https://img.shields.io/badge/Release-v1.0.3-6C8C6B?style=flat-square&logo=github&logoColor=white)
+![Release v1.0.4](https://img.shields.io/badge/Release-v1.0.4-6C8C6B?style=flat-square&logo=github&logoColor=white)
 ![MIT License](https://img.shields.io/badge/License-MIT-4B5563?style=flat-square)
 ![Windows](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square&logo=windows&logoColor=white)
 
@@ -63,7 +63,7 @@
 
 你可以使用本地构建好的安装包：
 
-- `codex-profile-switcher-1.0.3.vsix`
+- `codex-profile-switcher-1.0.4.vsix`
 
 也可以直接打开 GitHub Releases 下载对应版本：
 
@@ -75,7 +75,7 @@
 2. 打开左侧“扩展”面板
 3. 点击右上角 `...`
 4. 选择 `Install from VSIX...`
-5. 选中 `codex-profile-switcher-1.0.3.vsix`
+5. 选中 `codex-profile-switcher-1.0.4.vsix`
 6. 安装完成后，按提示重载 VS Code
 
 ### 第三步：打开插件
@@ -95,7 +95,7 @@
    - `显示名称`
    - `服务地址`
    - `API Key`
-3. 如果这是常见 OpenAI 兼容地址，`线路类型` 选 `官方线路地址`
+3. 如果你不确定怎么选，`线路类型` 保持 `沿用当前线路（推荐）`
 4. 点击 `新增为新配置`
 
 这样这套配置就保存好了。
@@ -127,12 +127,14 @@
 
 如果你不确定该怎么选，优先这样用：
 
-1. `线路类型` 先选 `官方线路地址`
+1. `线路类型` 先选 `沿用当前线路（推荐）`
 2. 填你的 `服务地址`
 3. 填你自己的 `API Key`
 4. 保存后直接切换
 
 这样通常更稳，也更不容易出现“聊天记录像换了地方”的问题。
+
+如果你手动选择 `官方线路地址` 或 `独立线路配置`，插件会在保存时提醒你确认，因为固定线路可能让 Codex 使用不同的 provider，聊天记录有机会分散到另一条线路。
 
 ## 适用范围
 
@@ -157,6 +159,7 @@
 
 - 在侧边栏保存多套 Codex API 配置并快速切换
 - 支持两种线路：
+  - 沿用当前线路：推荐选项，切换时自动按当前 Codex 配置选择线路
   - 官方线路地址：适合大多数代理地址，聊天记录更不容易分散
   - 独立线路配置：适合必须使用单独线路标识的服务
 - 每套普通配置使用自己的 API Key，切换时会同步切换 Key

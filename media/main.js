@@ -34,7 +34,7 @@
   function getEmptyFormData() {
     return {
       name: "",
-      kind: "builtinOpenai",
+      kind: "followCurrent",
       providerId: "",
       baseUrl: "",
       apiKey: "",
@@ -71,7 +71,7 @@
 
     return {
       name: profile.name ?? "",
-      kind: profile.kind ?? "builtinOpenai",
+      kind: profile.kind ?? "followCurrent",
       providerId: profile.providerId ?? "",
       baseUrl: profile.baseUrl ?? "",
       apiKey: profile.apiKey ?? "",
@@ -90,8 +90,8 @@
   function fillForm(profile) {
     const data = cloneProfileForEditing(profile);
     const formKind = data.kind === "officialSnapshot"
-      ? data.providerId === "openai" ? "builtinOpenai" : "customProvider"
-      : data.kind ?? "builtinOpenai";
+      ? "followCurrent"
+      : data.kind ?? "followCurrent";
     document.getElementById("name").value = data.name ?? "";
     document.getElementById("kind").value = formKind;
     document.getElementById("providerId").value = data.providerId ?? "";
@@ -116,6 +116,8 @@
 
   function formatProfileKind(kind) {
     switch (kind) {
+      case "followCurrent":
+        return "沿用当前线路";
       case "builtinOpenai":
         return "官方线路";
       case "officialSnapshot":
@@ -215,6 +217,7 @@
             <label>
               线路类型
               <select id="kind">
+                <option value="followCurrent">沿用当前线路（推荐）</option>
                 <option value="builtinOpenai">官方线路地址</option>
                 <option value="customProvider">独立线路配置</option>
               </select>
@@ -297,9 +300,10 @@
 
   function applyFormVisibility(readonly) {
     const kind = document.getElementById("kind").value;
+    const isFollowCurrent = kind === "followCurrent";
     const isBuiltin = kind === "builtinOpenai";
 
-    document.getElementById("providerIdField").style.display = isBuiltin ? "none" : "grid";
+    document.getElementById("providerIdField").style.display = isFollowCurrent || isBuiltin ? "none" : "grid";
     document.getElementById("apiKey").disabled = readonly;
     document.getElementById("kind").disabled = readonly;
     document.getElementById("providerId").disabled = readonly;
@@ -312,21 +316,25 @@
     document.getElementById("updateBtn").disabled = readonly;
 
     const hint = [];
-    if (isBuiltin) {
+    if (isFollowCurrent) {
+      hint.push("推荐选项。切换时会按当前 Codex 配置自动判断线路，尽量避免聊天记录分散。");
+    } else if (isBuiltin) {
       hint.push("官方线路地址适合大多数情况，也更不容易让聊天记录分散到不同线路。");
     } else {
       hint.push("独立线路配置适合必须使用单独线路标识的服务；切换时会只保留这一条线路配置。");
+    }
+    if (!isFollowCurrent) {
+      hint.push("固定线路可能让聊天记录分散到另一条线路；保存时会再次提醒你确认。");
     }
     hint.push("切换时会把这里填写的 Key 设为当前使用的 Key。");
     document.getElementById("formHint").innerHTML = hint.map((item) => `<div>${escapeHtml(item)}</div>`).join("");
   }
 
   function importCurrentConfig() {
-    const isBuiltin = state.current.providerKind === "builtinOpenai";
     state.editingProfile = cloneProfileForEditing({
       name: `导入于 ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`,
-      kind: isBuiltin ? "builtinOpenai" : "customProvider",
-      providerId: isBuiltin ? "" : state.current.providerName,
+      kind: "followCurrent",
+      providerId: state.current.providerName,
       baseUrl: state.current.baseUrl,
       apiKey: state.current.apiKey,
       fastResponseEnabled: state.current.fastResponseEnabled,

@@ -6,7 +6,7 @@ import { promisify } from "util";
 import * as vscode from "vscode";
 
 type ProviderKind = "builtinOpenai" | "customOpenaiAuth" | "customProvider";
-type ProfileKind = "builtinOpenai" | "customProvider" | "officialSnapshot";
+type ProfileKind = "followCurrent" | "builtinOpenai" | "customProvider" | "officialSnapshot";
 type AuthMode = "apiKey" | "chatgpt" | "accessToken" | "loggedOut" | "unknown";
 type AuthStrategy = "apikey" | "preserve";
 type Personality = "" | "none" | "friendly" | "pragmatic";
@@ -117,11 +117,13 @@ class CodexConfigManager {
 
     const configText = await fs.readFile(this.configPath, "utf8");
     let updatedConfig = configText;
+    const current = await this.readCurrentState();
 
-    if (profile.kind === "builtinOpenai") {
+    if (profile.kind === "followCurrent") {
+      updatedConfig = updateFollowCurrentConfig(configText, current, profile);
+    } else if (profile.kind === "builtinOpenai") {
       updatedConfig = updateBuiltinOpenAIConfig(configText, profile);
     } else if (profile.kind === "customProvider") {
-      const current = await this.readCurrentState();
       updatedConfig = updateCustomProviderConfig(configText, current.providerName, profile);
     }
 
@@ -329,13 +331,17 @@ class CodexProfileViewProvider implements vscode.WebviewViewProvider {
   private profileMatchesCurrentState(profile: Profile, current: CurrentState): boolean {
     const kindMatches = profile.kind === "officialSnapshot"
       ? true
-      : profile.kind === "builtinOpenai"
-        ? current.providerKind === "builtinOpenai"
-        : current.providerKind !== "builtinOpenai";
+      : profile.kind === "followCurrent"
+        ? true
+        : profile.kind === "builtinOpenai"
+          ? current.providerKind === "builtinOpenai"
+          : current.providerKind !== "builtinOpenai";
 
-    const providerMatches = profile.kind === "builtinOpenai"
-      ? current.providerName === "openai"
-      : !profile.providerId || profile.providerId === current.providerName;
+    const providerMatches = profile.kind === "followCurrent"
+      ? true
+      : profile.kind === "builtinOpenai"
+        ? current.providerName === "openai"
+        : !profile.providerId || profile.providerId === current.providerName;
 
     const apiKeyMatches = profile.authStrategy === "preserve" || profile.apiKey === current.apiKey;
 
@@ -363,7 +369,9 @@ class CodexProfileViewProvider implements vscode.WebviewViewProvider {
   private restoreStoredProfile(input: unknown): Profile | undefined {
     const raw = (input ?? {}) as Record<string, unknown>;
     const id = typeof raw.id === "string" && raw.id ? raw.id : createProfileId();
-    const kind = raw.kind === "builtinOpenai" || raw.kind === "officialSnapshot" ? raw.kind : "customProvider";
+    const kind = raw.kind === "followCurrent" || raw.kind === "builtinOpenai" || raw.kind === "officialSnapshot"
+      ? raw.kind
+      : "customProvider";
     const authStrategy = raw.authStrategy === "preserve" ? "preserve" : "apikey";
 
     const profile: Profile = {
@@ -393,7 +401,11 @@ class CodexProfileViewProvider implements vscode.WebviewViewProvider {
 
   private normalizeProfile(input: unknown, id?: string): Profile {
     const raw = (input ?? {}) as Record<string, unknown>;
-    const kind = raw.kind === "builtinOpenai" ? "builtinOpenai" : "customProvider";
+    const kind: ProfileKind = raw.kind === "builtinOpenai"
+      ? "builtinOpenai"
+      : raw.kind === "customProvider"
+        ? "customProvider"
+        : "followCurrent";
     const authStrategy: AuthStrategy = raw.authStrategy === "preserve" ? "preserve" : "apikey";
     const profile: Profile = {
       id: id ?? createProfileId(),
@@ -427,7 +439,11 @@ class CodexProfileViewProvider implements vscode.WebviewViewProvider {
 
   private async addProfile(input: unknown): Promise<void> {
     const profiles = this.loadProfiles().filter((profile) => profile.kind !== "officialSnapshot");
-    profiles.push(this.normalizeProfile(input));
+    const confirmedInput = await this.confirmProviderChoiceIfNeeded(input);
+    if (!confirmedInput) {
+      return;
+    }
+    profiles.push(this.normalizeProfile(confirmedInput));
     await this.saveProfiles(profiles);
     await this.refresh();
     void vscode.window.showInformationMessage("已新增配置。");
@@ -446,10 +462,41 @@ class CodexProfileViewProvider implements vscode.WebviewViewProvider {
     if (index < 0) {
       throw new Error("当前选中的配置不存在。");
     }
-    profiles[index] = this.normalizeProfile(input, id);
+    const confirmedInput = await this.confirmProviderChoiceIfNeeded(input);
+    if (!confirmedInput) {
+      return;
+    }
+    profiles[index] = this.normalizeProfile(confirmedInput, id);
     await this.saveProfiles(profiles);
     await this.refresh();
     void vscode.window.showInformationMessage("已保存修改。");
+  }
+
+  private async confirmProviderChoiceIfNeeded(input: unknown): Promise<unknown | undefined> {
+    const raw = (input ?? {}) as Record<string, unknown>;
+    if (raw.kind === "followCurrent") {
+      return input;
+    }
+
+    const choice = await vscode.window.showWarningMessage(
+      "你选择了固定线路。以后切换到这套配置时，Codex 可能会使用不同的 provider，聊天记录可能分散到另一条线路。建议选择“沿用当前线路”。",
+      { modal: true },
+      "改为沿用当前线路",
+      "仍然保存",
+    );
+
+    if (choice === "改为沿用当前线路") {
+      return {
+        ...raw,
+        kind: "followCurrent",
+      };
+    }
+
+    if (choice === "仍然保存") {
+      return input;
+    }
+
+    return undefined;
   }
 
   private async deleteProfile(id: unknown): Promise<void> {
@@ -727,6 +774,22 @@ function updateBuiltinOpenAIConfig(text: string, profile: Profile): string {
   updated = setTopLevelStringValue(updated, "service_tier", profile.fastResponseEnabled ? "fast" : "default");
   updated = setOptionalTopLevelStringValue(updated, "personality", profile.personality || undefined);
   return updated;
+}
+
+function updateFollowCurrentConfig(text: string, current: CurrentState, profile: Profile): string {
+  if (current.providerKind === "builtinOpenai" || current.providerName === "openai" || !current.providerName) {
+    return updateBuiltinOpenAIConfig(text, {
+      ...profile,
+      kind: "builtinOpenai",
+      providerId: "openai",
+    });
+  }
+
+  return updateCustomProviderConfig(text, current.providerName, {
+    ...profile,
+    kind: "customProvider",
+    providerId: current.providerName,
+  });
 }
 
 function updateCustomProviderConfig(text: string, currentProviderName: string, profile: Profile): string {

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2026-07-14
+
+### Added
+- Added a recommended "follow current route" provider option that resolves the target route from the current Codex configuration when switching profiles.
+
+### Changed
+- Saving a profile with a fixed route now warns that chat history may be split across providers and recommends following the current route.
+
 ## [1.0.3] - 2026-07-14
 
 ### Added

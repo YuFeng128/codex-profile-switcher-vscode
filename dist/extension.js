@@ -95,11 +95,14 @@ class CodexConfigManager {
         await this.backupCurrentFiles();
         const configText = await fs.readFile(this.configPath, "utf8");
         let updatedConfig = configText;
-        if (profile.kind === "builtinOpenai") {
+        const current = await this.readCurrentState();
+        if (profile.kind === "followCurrent") {
+            updatedConfig = updateFollowCurrentConfig(configText, current, profile);
+        }
+        else if (profile.kind === "builtinOpenai") {
             updatedConfig = updateBuiltinOpenAIConfig(configText, profile);
         }
         else if (profile.kind === "customProvider") {
-            const current = await this.readCurrentState();
             updatedConfig = updateCustomProviderConfig(configText, current.providerName, profile);
         }
         await fs.writeFile(this.configPath, updatedConfig, "utf8");
@@ -285,12 +288,16 @@ class CodexProfileViewProvider {
     profileMatchesCurrentState(profile, current) {
         const kindMatches = profile.kind === "officialSnapshot"
             ? true
+            : profile.kind === "followCurrent"
+                ? true
+                : profile.kind === "builtinOpenai"
+                    ? current.providerKind === "builtinOpenai"
+                    : current.providerKind !== "builtinOpenai";
+        const providerMatches = profile.kind === "followCurrent"
+            ? true
             : profile.kind === "builtinOpenai"
-                ? current.providerKind === "builtinOpenai"
-                : current.providerKind !== "builtinOpenai";
-        const providerMatches = profile.kind === "builtinOpenai"
-            ? current.providerName === "openai"
-            : !profile.providerId || profile.providerId === current.providerName;
+                ? current.providerName === "openai"
+                : !profile.providerId || profile.providerId === current.providerName;
         const apiKeyMatches = profile.authStrategy === "preserve" || profile.apiKey === current.apiKey;
         return kindMatches
             && providerMatches
@@ -311,7 +318,9 @@ class CodexProfileViewProvider {
     restoreStoredProfile(input) {
         const raw = (input ?? {});
         const id = typeof raw.id === "string" && raw.id ? raw.id : createProfileId();
-        const kind = raw.kind === "builtinOpenai" || raw.kind === "officialSnapshot" ? raw.kind : "customProvider";
+        const kind = raw.kind === "followCurrent" || raw.kind === "builtinOpenai" || raw.kind === "officialSnapshot"
+            ? raw.kind
+            : "customProvider";
         const authStrategy = raw.authStrategy === "preserve" ? "preserve" : "apikey";
         const profile = {
             id,
@@ -336,7 +345,11 @@ class CodexProfileViewProvider {
     }
     normalizeProfile(input, id) {
         const raw = (input ?? {});
-        const kind = raw.kind === "builtinOpenai" ? "builtinOpenai" : "customProvider";
+        const kind = raw.kind === "builtinOpenai"
+            ? "builtinOpenai"
+            : raw.kind === "customProvider"
+                ? "customProvider"
+                : "followCurrent";
         const authStrategy = raw.authStrategy === "preserve" ? "preserve" : "apikey";
         const profile = {
             id: id ?? createProfileId(),
@@ -367,7 +380,11 @@ class CodexProfileViewProvider {
     }
     async addProfile(input) {
         const profiles = this.loadProfiles().filter((profile) => profile.kind !== "officialSnapshot");
-        profiles.push(this.normalizeProfile(input));
+        const confirmedInput = await this.confirmProviderChoiceIfNeeded(input);
+        if (!confirmedInput) {
+            return;
+        }
+        profiles.push(this.normalizeProfile(confirmedInput));
         await this.saveProfiles(profiles);
         await this.refresh();
         void vscode.window.showInformationMessage("已新增配置。");
@@ -384,10 +401,31 @@ class CodexProfileViewProvider {
         if (index < 0) {
             throw new Error("当前选中的配置不存在。");
         }
-        profiles[index] = this.normalizeProfile(input, id);
+        const confirmedInput = await this.confirmProviderChoiceIfNeeded(input);
+        if (!confirmedInput) {
+            return;
+        }
+        profiles[index] = this.normalizeProfile(confirmedInput, id);
         await this.saveProfiles(profiles);
         await this.refresh();
         void vscode.window.showInformationMessage("已保存修改。");
+    }
+    async confirmProviderChoiceIfNeeded(input) {
+        const raw = (input ?? {});
+        if (raw.kind === "followCurrent") {
+            return input;
+        }
+        const choice = await vscode.window.showWarningMessage("你选择了固定线路。以后切换到这套配置时，Codex 可能会使用不同的 provider，聊天记录可能分散到另一条线路。建议选择“沿用当前线路”。", { modal: true }, "改为沿用当前线路", "仍然保存");
+        if (choice === "改为沿用当前线路") {
+            return {
+                ...raw,
+                kind: "followCurrent",
+            };
+        }
+        if (choice === "仍然保存") {
+            return input;
+        }
+        return undefined;
     }
     async deleteProfile(id) {
         if (typeof id !== "string" || !id) {
@@ -619,6 +657,20 @@ function updateBuiltinOpenAIConfig(text, profile) {
     updated = setTopLevelStringValue(updated, "service_tier", profile.fastResponseEnabled ? "fast" : "default");
     updated = setOptionalTopLevelStringValue(updated, "personality", profile.personality || undefined);
     return updated;
+}
+function updateFollowCurrentConfig(text, current, profile) {
+    if (current.providerKind === "builtinOpenai" || current.providerName === "openai" || !current.providerName) {
+        return updateBuiltinOpenAIConfig(text, {
+            ...profile,
+            kind: "builtinOpenai",
+            providerId: "openai",
+        });
+    }
+    return updateCustomProviderConfig(text, current.providerName, {
+        ...profile,
+        kind: "customProvider",
+        providerId: current.providerName,
+    });
 }
 function updateCustomProviderConfig(text, currentProviderName, profile) {
     const targetProviderId = profile.providerId || currentProviderName;
