@@ -56,7 +56,7 @@
     "desktop": "npm run compile && node ./scripts/run-electron.js",
     "desktop:smoke": "npm run compile && node ./scripts/run-electron.js --smoke",
     "dist:win": "npm run compile && electron-builder --win nsis portable --publish never",
-    "dist:mac": "npm run compile && electron-builder --mac dmg zip --publish never"
+    "dist:mac": "npm run compile && electron-builder --mac dmg zip --x64 --arm64 --publish never"
   },
   "build": {
     "appId": "chat.hongyun.chatgpt-profile-switcher",
