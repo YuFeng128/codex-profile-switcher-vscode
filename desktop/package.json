@@ -1,0 +1,4 @@
+{
+  "name": "codex-hongyun-configurator-desktop",
+  "main": "../dist/desktop/main.js"
+}

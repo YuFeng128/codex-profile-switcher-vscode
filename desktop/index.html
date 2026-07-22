@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self';" />
+  <title>ChatGPT Hongyun Configurator</title>
+  <link rel="icon" href="../media/icon.svg" />
+  <link rel="stylesheet" href="./styles.css?v=modal" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-title">ChatGPT Switch</span>
+        <button id="refreshBtn" type="button" class="icon-button" aria-label="刷新状态" title="刷新状态" data-tooltip="刷新状态">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 11a8.1 8.1 0 0 0-14.9-4.3L3 9m0 0h5.8M3 9V3.2" />
+            <path d="M4 13a8.1 8.1 0 0 0 14.9 4.3L21 15m0 0h-5.8M21 15v5.8" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="app-switcher" aria-label="应用切换">
+        <button type="button" class="app-tab active" title="ChatGPT 配置" data-tooltip="ChatGPT 配置">
+          <span class="app-icon codex-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3.5c2.1-1.2 4.8-.5 6 1.6.5.8.7 1.7.6 2.6 1.9 1.1 2.6 3.6 1.5 5.5-.5.8-1.1 1.4-1.9 1.8.1 2.2-1.6 4.2-3.8 4.3-.9.1-1.8-.2-2.5-.7-1.9 1.2-4.5.6-5.7-1.3-.5-.8-.7-1.6-.7-2.5-1.9-1.1-2.6-3.6-1.5-5.5.5-.8 1.1-1.4 1.9-1.8-.1-2.2 1.6-4.2 3.8-4.3.9-.1 1.7.2 2.3.6Z" />
+              <path d="M8.5 8.1 12 6.1l3.5 2v4l-3.5 2-3.5-2v-4Z" />
+              <path d="M12 6.1v4.1l3.5 1.9M8.5 12.1l3.5-1.9 3.5-2.1M12 14.1v4" />
+            </svg>
+          </span>
+          <span>ChatGPT</span>
+        </button>
+        <button type="button" class="app-tab" aria-disabled="true" title="Claude 配置（未启用）" data-tooltip="Claude 配置（未启用）">
+          <span class="app-icon claude-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2v20M4.9 4.9l14.2 14.2M2 12h20M4.9 19.1 19.1 4.9" />
+              <circle cx="12" cy="12" r="3.2" />
+            </svg>
+          </span>
+          <span>Claude</span>
+        </button>
+        <button type="button" class="app-tab" aria-disabled="true" title="Gemini 配置（未启用）" data-tooltip="Gemini 配置（未启用）">
+          <span class="app-icon gemini-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2 14.8 9.2 22 12 14.8 14.8 12 22 9.2 14.8 2 12 9.2 9.2 12 2Z" />
+            </svg>
+          </span>
+          <span>Gemini</span>
+        </button>
+      </nav>
+
+      <div class="top-actions">
+        <div class="tool-pill">
+          <button id="openConfigBtn" type="button" class="tool-button" title="打开 config.toml" data-tooltip="打开 config.toml" aria-label="打开 config.toml">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+              <path d="M14 3v5h5" />
+              <path d="M8 13h8M8 17h5" />
+            </svg>
+          </button>
+          <button id="openAuthBtn" type="button" class="tool-button" title="打开 auth.json" data-tooltip="打开 auth.json" aria-label="打开 auth.json">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 7a4 4 0 1 0-3.2 3.9L4 18.7V21h2.3l1.4-1.4H10v-2.3l1.4-1.4h2.3l2.4-2.4A4 4 0 0 0 15 7Z" />
+              <circle cx="15" cy="7" r="1" />
+            </svg>
+          </button>
+          <button id="importBtn" type="button" class="tool-button" title="导入当前配置" data-tooltip="导入当前配置" aria-label="导入当前配置">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v11" />
+              <path d="m7 9 5 5 5-5" />
+              <path d="M5 19h14" />
+            </svg>
+          </button>
+        </div>
+        <button id="addBtn" type="button" class="add-circle" aria-label="新增供应商" title="新增供应商" data-tooltip="新增供应商">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-view">
+      <section class="status-strip">
+        <div class="status-item">
+          <span>当前配置</span>
+          <strong id="activeProfileName">未匹配到已保存配置</strong>
+        </div>
+        <div class="status-item wide">
+          <span>服务地址</span>
+          <strong id="activeBaseUrl">使用默认地址</strong>
+        </div>
+        <div class="status-item">
+          <span>登录状态</span>
+          <strong id="activeAuthMode">未识别</strong>
+        </div>
+        <div class="status-item">
+          <span>原账号备份</span>
+          <strong id="snapshotState">未保存</strong>
+        </div>
+      </section>
+
+      <section class="quick-hongyun">
+        <div>
+          <div class="panel-title">Hongyun 快速配置</div>
+          <p>填入 API Key 后会自动写入当前线路的 baseUrl、Key 和 Full Access。</p>
+        </div>
+        <code id="hongyunBaseUrl">https://ai.hongyun.chat/v1</code>
+        <div class="inline-field">
+          <input id="hongyunApiKey" type="password" autocomplete="off" placeholder="Hongyun API Key" />
+          <button id="toggleHongyunKeyBtn" type="button" class="small-button">显示</button>
+        </div>
+        <button id="autoHongyunBtn" type="button" class="blue-button">自动配置</button>
+      </section>
+
+      <section class="provider-section">
+        <div id="profileList" class="provider-list"></div>
+      </section>
+    </main>
+
+    <footer class="community-footer">AI 技术交流群 QQ：<strong>1060173874</strong></footer>
+  </div>
+
+  <div id="providerModal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <section class="editor-section">
+      <div class="editor-head">
+        <button id="clearBtn" type="button" class="back-button" aria-label="关闭">×</button>
+        <h1 id="modalTitle">添加 ChatGPT 供应商</h1>
+      </div>
+
+      <div class="editor-card">
+        <div id="readonlyNotice" class="notice hidden">原有账号备份只能启用或删除，不能直接修改。</div>
+
+        <div class="preset-row" aria-label="预设供应商">
+          <button type="button" class="preset active">Hongyun</button>
+          <button type="button" class="preset">OpenAI</button>
+          <button type="button" class="preset">DeepSeek</button>
+          <button type="button" class="preset">Kimi</button>
+          <button type="button" class="preset">Qwen</button>
+          <button type="button" class="preset">自定义配置</button>
+        </div>
+
+        <div class="hint-line">💡 Hongyun 已预设请求地址，只需要填写 API Key。</div>
+
+        <div class="form">
+          <label>
+            供应商名称
+            <input id="name" type="text" placeholder="Hongyun OpenAI" />
+          </label>
+
+          <label>
+            线路类型
+            <select id="kind">
+              <option value="followCurrent">沿用当前线路（推荐）</option>
+              <option value="builtinOpenai">官方线路地址</option>
+              <option value="customProvider">独立线路配置</option>
+            </select>
+          </label>
+
+          <label id="providerIdField">
+            线路标识
+            <input id="providerId" type="text" placeholder="hongyun" />
+          </label>
+
+          <label>
+            请求地址
+            <input id="baseUrl" type="text" placeholder="https://ai.hongyun.chat/v1" />
+          </label>
+
+          <label>
+            API Key
+            <div class="inline-field">
+              <input id="apiKey" type="password" autocomplete="off" placeholder="输入这套配置要使用的 Key" />
+              <button id="toggleApiKeyBtn" type="button" class="small-button">显示</button>
+            </div>
+          </label>
+
+          <div class="options">
+            <label class="check">
+              <input id="fastResponseEnabled" type="checkbox" />
+              <span>快速响应</span>
+            </label>
+            <label class="check">
+              <input id="writePreferredAuthMethod" type="checkbox" />
+              <span>旧版 ChatGPT 优先使用 Key 登录</span>
+            </label>
+            <label class="check">
+              <input id="fullAccessEnabled" type="checkbox" />
+              <span>Full Access</span>
+            </label>
+          </div>
+
+          <label>
+            表达风格
+            <select id="personality">
+              <option value="">跟随 ChatGPT 默认</option>
+              <option value="none">简洁中性</option>
+              <option value="friendly">友好亲和</option>
+              <option value="pragmatic">务实直接</option>
+            </select>
+          </label>
+
+          <div id="formHint" class="form-hint"></div>
+        </div>
+      </div>
+
+      <div class="bottom-bar">
+        <button id="deleteBtn" type="button" class="cancel-button">删除选中</button>
+        <button id="updateBtn" type="button" class="blue-button">保存修改</button>
+        <button id="switchBtn" type="button" class="blue-button">启用选中</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="./renderer.js?v=modal"></script>
+</body>
+</html>

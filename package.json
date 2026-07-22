@@ -1,10 +1,11 @@
 {
   "name": "codex-profile-switcher",
-  "displayName": "Codex Profile Switcher",
-  "description": "Switch Codex API base_url and auth key from inside VS Code.",
+  "displayName": "ChatGPT Profile Switcher",
+  "description": "Switch ChatGPT API base_url and auth key from inside VS Code.",
   "version": "1.0.4",
   "publisher": "local",
   "license": "MIT",
+  "author": "local",
   "repository": {
     "type": "git",
     "url": "https://github.com/YuFeng128/codex-profile-switcher-vscode.git"
@@ -28,7 +29,7 @@
       "activitybar": [
         {
           "id": "codexProfileSwitcher",
-          "title": "Codex",
+          "title": "ChatGPT",
           "icon": "media/icon.svg"
         }
       ]
@@ -45,17 +46,57 @@
     "commands": [
       {
         "command": "codexProfileSwitcher.refresh",
-        "title": "Codex Profile Switcher: Refresh"
+        "title": "ChatGPT Profile Switcher: Refresh"
       }
     ]
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "desktop": "npm run compile && node ./scripts/run-electron.js",
+    "desktop:smoke": "npm run compile && node ./scripts/run-electron.js --smoke",
+    "dist:win": "npm run compile && electron-builder --win nsis portable",
+    "dist:mac": "npm run compile && electron-builder --mac dmg zip"
+  },
+  "build": {
+    "appId": "chat.hongyun.chatgpt-profile-switcher",
+    "productName": "ChatGPT Hongyun Configurator",
+    "asar": true,
+    "directories": {
+      "output": "release/desktop"
+    },
+    "files": [
+      "dist/desktop/**/*",
+      "desktop/**/*",
+      "media/icon.svg",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist/desktop/main.js"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.developer-tools"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/vscode": "^1.90.0",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
     "typescript": "^5.8.3"
   }
 }
